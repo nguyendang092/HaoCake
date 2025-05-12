@@ -24,6 +24,11 @@ CAKE_TOPICS = {
 flask_app = Flask(__name__)
 application = ApplicationBuilder().token(TOKEN).build()
 
+# Route cho trang chủ
+@flask_app.route('/')
+def home():
+    return "Bot đang chạy!"
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [[InlineKeyboardButton(text, callback_data=text)] for text in CAKE_TOPICS]
     markup = InlineKeyboardMarkup(keyboard)
