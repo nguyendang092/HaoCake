@@ -1,14 +1,15 @@
+import os
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
 from flask import Flask, request
-import os
 import asyncio
 
-TOKEN = os.environ.get("7928120010:AAE3wYneqTjgOALeGkKmQ5_keinrxPZyY-w")
-APP_URL = os.environ.get("https://haocake.onrender.com")  # VD: https://your-app-name.onrender.com
+# Lấy token và URL từ biến môi trường
+TOKEN = os.environ.get("BOT_TOKEN")
+APP_URL = os.environ.get("APP_URL")  # VD: https://your-app-name.onrender.com
 CAKE_DIR = "cakes"
 
-# Các chủ đề bánh
+# Chủ đề bánh
 CAKE_TOPICS = {
     "🎂 Sinh nhật": "birthday",
     "💍 Kỷ niệm cưới": "anniversary",
@@ -19,13 +20,9 @@ CAKE_TOPICS = {
     "🎄 Giáng sinh / Tết / Trung thu": "holiday",
 }
 
-# Flask app để nhận webhook từ Telegram
 flask_app = Flask(__name__)
-
-# Telegram bot application
 application = ApplicationBuilder().token(TOKEN).build()
 
-# /start handler
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [[InlineKeyboardButton(text, callback_data=text)] for text in CAKE_TOPICS]
     markup = InlineKeyboardMarkup(keyboard)
@@ -34,7 +31,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif update.callback_query:
         await update.callback_query.message.reply_text("🎂 Chọn chủ đề bánh kem:", reply_markup=markup)
 
-# Nút nhấn chọn ảnh
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -59,22 +55,18 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     back_btn = InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Quay lại menu", callback_data="🔙 Quay lại menu")]])
     await query.message.reply_text("Bạn có muốn chọn chủ đề khác?", reply_markup=back_btn)
 
-# Đăng ký handler
 application.add_handler(CommandHandler("start", start))
 application.add_handler(CallbackQueryHandler(button_handler))
 
-# Flask webhook endpoint
 @flask_app.route('/webhook', methods=['POST'])
 def webhook():
     update = Update.de_json(request.get_json(force=True), application.bot)
     asyncio.run(application.process_update(update))
     return "OK"
 
-# Đặt webhook khi Flask khởi động
 @flask_app.before_first_request
 def set_webhook():
-    webhook_url = f"{APP_URL}/webhook"
-    asyncio.run(application.bot.set_webhook(webhook_url))
+    asyncio.run(application.bot.set_webhook(f"{APP_URL}/webhook"))
 
-# Gunicorn sẽ gọi flask_app
+# Flask app sẽ được Gunicorn gọi
 app = flask_app
