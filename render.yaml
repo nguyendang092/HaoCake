@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: telegram-cake-bot
+    env: python
+    plan: free
+    buildCommand: poetry install
+    startCommand: poetry run python bot.py
+    envVars:
+      - key: BOT_TOKEN
+        value: 7928120010:AAE3wYneqTjgOALeGkKmQ5_keinrxPZyY-w
+      - key: APP_URL
+        value: https://haocake.onrender.com
