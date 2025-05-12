@@ -70,14 +70,12 @@ def set_webhook():
 
 # Flask app sẽ được Gunicorn gọi
 app = flask_app
-if __name__ == "__main__":
-    import threading
+import threading
 
-    # Đặt webhook khi app khởi chạy
-    def set_webhook():
-        webhook_url = f"{APP_URL}/webhook"
-        asyncio.run(application.bot.set_webhook(webhook_url))
+async def set_webhook():
+    webhook_url = f"{APP_URL}/webhook"
+    await application.bot.set_webhook(webhook_url)
+    print(f"✅ Đã đặt webhook: {webhook_url}")
 
-    threading.Thread(target=set_webhook).start()
-
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
+# Gọi webhook bằng thread để không chặn main thread
+threading.Thread(target=lambda: asyncio.run(set_webhook())).start()
