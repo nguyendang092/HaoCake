@@ -3,6 +3,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMe
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
 from flask import Flask, request
 import asyncio
+import threading
 
 # Lấy token và URL từ biến môi trường
 TOKEN = os.environ.get("BOT_TOKEN")
@@ -64,18 +65,15 @@ def webhook():
     asyncio.run(application.process_update(update))
     return "OK"
 
-@flask_app.before_first_request
-def set_webhook():
-    asyncio.run(application.bot.set_webhook(f"{APP_URL}/webhook"))
-
-# Flask app sẽ được Gunicorn gọi
-app = flask_app
-import threading
-
+# Đặt webhook khi Flask app khởi động
 async def set_webhook():
     webhook_url = f"{APP_URL}/webhook"
     await application.bot.set_webhook(webhook_url)
     print(f"✅ Đã đặt webhook: {webhook_url}")
 
-# Gọi webhook bằng thread để không chặn main thread
+# Dùng thread để chạy set_webhook mà không chặn main thread của Flask
 threading.Thread(target=lambda: asyncio.run(set_webhook())).start()
+
+# Flask app sẽ được Gunicorn gọi
+if __name__ == "__main__":
+    flask_app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
